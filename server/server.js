@@ -21,28 +21,28 @@ app.use(express.static(publicPath));
 //Socket IO events
 //Connection event
 io.on('connection', (socket) => {
-    console.log('User connected');
 
     socket.on('join', (params, callback) => {
         if (!isRealString(params.name) || !isRealString(params.room)) {
+            //error, call callback function with error param
             callback('Name and Room Name are required');
         }
 
+        //no error, user joins the chat room
         socket.join(params.room);
 
-        //Send welcome message when a new user joins
+        //call callback function without error param
+        callback();
+
+        //Send welcome message to the new user
         socket.emit('newMessage', generateMessage('Admin', 'Welcome to Chat App!!!'));
 
-        //Broadcast when a new user joins
+        //Broadcast to other users in the room that a new user joined
         socket.broadcast.to(params.room).emit('newMessage', generateMessage('Admin', `${params.name} has joined...`));
-
-        callback();
     });
 
     //Listen for new message from user
     socket.on('createMessage', (newMessage, callback) => {
-        console.log('New Message: ', newMessage);
-
         //Send the new message to all the users connected to the server
         //IO.emit emits the event to every client
         io.emit('newMessage', generateMessage(newMessage.from, newMessage.text));
@@ -53,8 +53,6 @@ io.on('connection', (socket) => {
 
     //Listen for new location message from user
     socket.on('createLocationMessage', (coords) => {
-        console.log('New Location Message: ', coords);
-
         //Send the new message to all the users connected to the server
         io.emit('newLocationMessage', generateLocationMessage('Admin', coords.latitude, coords.longitude));
     });
@@ -63,6 +61,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('User disconnected');
     });
+
 });
 
 //Server
